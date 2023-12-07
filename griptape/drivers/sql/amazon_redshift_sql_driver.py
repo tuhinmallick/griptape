@@ -47,8 +47,7 @@ class AmazonRedshiftSqlDriver(BaseSqlDriver):
         return cls._process_cells_from_rows_and_columns(columns, rows)
 
     def execute_query(self, query: str) -> Optional[list[BaseSqlDriver.RowResult]]:
-        rows = self.execute_query_raw(query)
-        if rows:
+        if rows := self.execute_query_raw(query):
             return [BaseSqlDriver.RowResult(row) for row in rows]
         else:
             return None

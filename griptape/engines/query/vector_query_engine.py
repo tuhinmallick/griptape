@@ -66,9 +66,9 @@ class VectorQueryEngine(BaseQueryEngine):
         return self.prompt_driver.run(PromptStack(inputs=[PromptStack.Input(message, role=PromptStack.USER_ROLE)]))
 
     def upsert_text_artifact(self, artifact: TextArtifact, namespace: Optional[str] = None) -> str:
-        result = self.vector_store_driver.upsert_text_artifact(artifact, namespace=namespace)
-
-        return result
+        return self.vector_store_driver.upsert_text_artifact(
+            artifact, namespace=namespace
+        )
 
     def upsert_text_artifacts(self, artifacts: list[TextArtifact], namespace: str) -> None:
         self.vector_store_driver.upsert_text_artifacts({namespace: artifacts})

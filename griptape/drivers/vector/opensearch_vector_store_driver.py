@@ -80,13 +80,12 @@ class OpenSearchVectorStoreDriver(BaseVectorStoreDriver):
 
             if response["hits"]["total"]["value"] > 0:
                 vector_data = response["hits"]["hits"][0]["_source"]
-                entry = BaseVectorStoreDriver.Entry(
+                return BaseVectorStoreDriver.Entry(
                     id=vector_id,
                     meta=vector_data.get("metadata"),
                     vector=vector_data.get("vector"),
                     namespace=vector_data.get("namespace"),
                 )
-                return entry
             else:
                 return None
         except Exception as e:
@@ -107,7 +106,7 @@ class OpenSearchVectorStoreDriver(BaseVectorStoreDriver):
 
         response = self.client.search(index=self.index_name, body=query_body)
 
-        entries = [
+        return [
             BaseVectorStoreDriver.Entry(
                 id=hit["_id"],
                 vector=hit["_source"].get("vector"),
@@ -116,7 +115,6 @@ class OpenSearchVectorStoreDriver(BaseVectorStoreDriver):
             )
             for hit in response["hits"]["hits"]
         ]
-        return entries
 
     def query(
         self,

@@ -14,18 +14,14 @@ class Conversation:
         lines = []
 
         for run in self.memory.runs:
-            lines.append(f"Q: {run.input}")
-            lines.append(f"A: {run.output}")
-
+            lines.extend((f"Q: {run.input}", f"A: {run.output}"))
         return lines
 
     def prompt_stack(self) -> list[str]:
-        lines = []
-
-        for stack in self.memory.to_prompt_stack().inputs:
-            lines.append(f"{stack.role}: {stack.content}")
-
-        return lines
+        return [
+            f"{stack.role}: {stack.content}"
+            for stack in self.memory.to_prompt_stack().inputs
+        ]
 
     def __str__(self) -> str:
         return str.join("\n", self.lines())

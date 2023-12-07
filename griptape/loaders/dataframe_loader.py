@@ -28,18 +28,13 @@ class DataFrameLoader(BaseLoader):
         )
 
     def _load_file(self, dataframe: DataFrame) -> list[CsvRowArtifact]:
-        artifacts = []
-
         chunks = [CsvRowArtifact(row) for row in dataframe.to_dict(orient="records")]
 
         if self.embedding_driver:
             for chunk in chunks:
                 chunk.generate_embedding(self.embedding_driver)
 
-        for chunk in chunks:
-            artifacts.append(chunk)
-
-        return artifacts
+        return list(chunks)
 
     def _dataframe_to_hash(self, dataframe: DataFrame) -> str:
         return hashlib.sha256(pd.util.hash_pandas_object(dataframe, index=True).values).hexdigest()

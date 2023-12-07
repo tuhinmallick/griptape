@@ -28,9 +28,7 @@ class AmazonBedrockPromptDriver(BaseMultiModelPromptDriver):
             modelId=self.model, contentType="application/json", accept="application/json", body=json.dumps(payload)
         )
 
-        response_body = response["body"].read()
-
-        if response_body:
+        if response_body := response["body"].read():
             return self.prompt_model_driver.process_output(response_body)
         else:
             raise Exception("model response is empty")
@@ -45,8 +43,7 @@ class AmazonBedrockPromptDriver(BaseMultiModelPromptDriver):
             modelId=self.model, contentType="application/json", accept="application/json", body=json.dumps(payload)
         )
 
-        response_body = response["body"]
-        if response_body:
+        if response_body := response["body"]:
             for chunk in response["body"]:
                 chunk_bytes = chunk["chunk"]["bytes"]
                 yield self.prompt_model_driver.process_output(chunk_bytes)

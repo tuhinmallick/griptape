@@ -40,9 +40,7 @@ class PineconeVectorStoreDriver(BaseVectorStoreDriver):
 
     def load_entry(self, vector_id: str, namespace: Optional[str] = None) -> Optional[BaseVectorStoreDriver.Entry]:
         result = self.index.fetch(ids=[vector_id], namespace=namespace).to_dict()
-        vectors = list(result["vectors"].values())
-
-        if len(vectors) > 0:
+        if vectors := list(result["vectors"].values()):
             vector = vectors[0]
 
             return BaseVectorStoreDriver.Entry(

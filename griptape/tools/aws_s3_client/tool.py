@@ -109,33 +109,31 @@ class AwsS3Client(BaseAwsClient):
         }
     )
     def upload_memory_artifacts_to_s3(self, params: dict) -> InfoArtifact | ErrorArtifact:
-        memory = self.find_input_memory(params["values"]["memory_name"])
+        if not (memory := self.find_input_memory(params["values"]["memory_name"])):
+            return ErrorArtifact("memory not found")
         artifact_namespace = params["values"]["artifact_namespace"]
+        artifacts = memory.load_artifacts(artifact_namespace)
+
         bucket_name = params["values"]["bucket_name"]
         object_key = params["values"]["object_key"]
 
-        if memory:
-            artifacts = memory.load_artifacts(artifact_namespace)
+        if len(artifacts) == 0:
+            return ErrorArtifact("no artifacts found")
+        elif len(artifacts) == 1:
+            try:
+                self._upload_object(bucket_name, object_key, artifacts.value[0].value)
 
-            if len(artifacts) == 0:
-                return ErrorArtifact("no artifacts found")
-            elif len(artifacts) == 1:
-                try:
-                    self._upload_object(bucket_name, object_key, artifacts.value[0].value)
-
-                    return InfoArtifact(f"uploaded successfully")
-                except Exception as e:
-                    return ErrorArtifact(f"error uploading objects to the bucket: {e}")
-            else:
-                try:
-                    for a in artifacts.value:
-                        self._upload_object(bucket_name, object_key, a.value)
-
-                    return InfoArtifact(f"uploaded successfully")
-                except Exception as e:
-                    return ErrorArtifact(f"error uploading objects to the bucket: {e}")
+                return InfoArtifact("uploaded successfully")
+            except Exception as e:
+                return ErrorArtifact(f"error uploading objects to the bucket: {e}")
         else:
-            return ErrorArtifact("memory not found")
+            try:
+                for a in artifacts.value:
+                    self._upload_object(bucket_name, object_key, a.value)
+
+                return InfoArtifact("uploaded successfully")
+            except Exception as e:
+                return ErrorArtifact(f"error uploading objects to the bucket: {e}")
 
     @activity(
         config={
@@ -157,7 +155,7 @@ class AwsS3Client(BaseAwsClient):
         try:
             self._upload_object(bucket_name, object_key, content)
 
-            return InfoArtifact(f"uploaded successfully")
+            return InfoArtifact("uploaded successfully")
         except Exception as e:
             return ErrorArtifact(f"error uploading objects to the bucket: {e}")
 

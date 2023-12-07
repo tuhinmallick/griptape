@@ -37,9 +37,7 @@ class AmazonSageMakerPromptDriver(BaseMultiModelPromptDriver):
             CustomAttributes=self.custom_attributes,
         )
 
-        decoded_body = json.loads(response["Body"].read().decode("utf8"))
-
-        if decoded_body:
+        if decoded_body := json.loads(response["Body"].read().decode("utf8")):
             return self.prompt_model_driver.process_output(decoded_body)
         else:
             raise Exception("model response is empty")

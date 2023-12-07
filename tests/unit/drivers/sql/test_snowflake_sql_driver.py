@@ -13,13 +13,15 @@ class TestSnowflakeSqlDriver:
 
     @pytest.fixture
     def mock_table(self, mocker):
+
         @dataclass
         class Column:
             name: str
             type: str = "VARCHAR"
 
-        mock_table = mocker.MagicMock(name="table", columns=[Column("first_name"), Column("last_name")])
-        return mock_table
+        return mocker.MagicMock(
+            name="table", columns=[Column("first_name"), Column("last_name")]
+        )
 
     @pytest.fixture
     def mock_metadata(self, mocker):
@@ -46,18 +48,19 @@ class TestSnowflakeSqlDriver:
 
     @pytest.fixture
     def mock_snowflake_connection(self, mocker):
-        mock_connection = mocker.MagicMock(spec=SnowflakeConnection, name="connection")
-        return mock_connection
+        return mocker.MagicMock(spec=SnowflakeConnection, name="connection")
 
     @pytest.fixture
     def mock_snowflake_connection_no_schema(self, mocker):
-        mock_connection = mocker.MagicMock(spec=SnowflakeConnection, name="connection_no_schema", schema=None)
-        return mock_connection
+        return mocker.MagicMock(
+            spec=SnowflakeConnection, name="connection_no_schema", schema=None
+        )
 
     @pytest.fixture
     def mock_snowflake_connection_no_database(self, mocker):
-        mock_connection = mocker.MagicMock(spec=SnowflakeConnection, name="connection_no_database", database=None)
-        return mock_connection
+        return mocker.MagicMock(
+            spec=SnowflakeConnection, name="connection_no_database", database=None
+        )
 
     @pytest.fixture
     def driver(self, mock_snowflake_engine, mock_snowflake_connection):

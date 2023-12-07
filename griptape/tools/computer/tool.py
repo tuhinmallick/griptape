@@ -114,10 +114,7 @@ class Computer(BaseTool):
             container.stop()
             container.remove()
 
-            if stderr:
-                return ErrorArtifact(stderr)
-            else:
-                return TextArtifact(stdout)
+            return ErrorArtifact(stderr) if stderr else TextArtifact(stdout)
         except Exception as e:
             return ErrorArtifact(f"error executing command: {e}")
 
@@ -174,7 +171,7 @@ class Computer(BaseTool):
 
             image = self.docker_client.images.build(path=temp_dir, tag=self.image_name(tool), rm=True, forcerm=True)
 
-            response = [line for line in image]
+            response = list(image)
 
             logging.info(f"Built image: {response[0].short_id}")
 

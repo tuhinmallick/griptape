@@ -85,8 +85,7 @@ class OpenWeatherClient(BaseTool):
     )
     def get_coordinates_by_location(self, params: dict) -> InfoArtifact | ErrorArtifact:
         location = params["values"].get("location")
-        coordinates = self._fetch_coordinates(location)
-        if coordinates:
+        if coordinates := self._fetch_coordinates(location):
             lat, lon = coordinates
             return InfoArtifact(f"Coordinates for {location}: Latitude: {lat}, Longitude: {lon}")
         else:
@@ -120,19 +119,17 @@ class OpenWeatherClient(BaseTool):
     )
     def get_current_weather_by_location(self, params: dict) -> ListArtifact | TextArtifact | ErrorArtifact:
         location = params["values"].get("location")
-        coordinates = self._fetch_coordinates(location)
-        if coordinates:
-            lat, lon = coordinates
-            request_params = {
-                "lat": lat,
-                "lon": lon,
-                "exclude": "minutely,hourly,daily,alerts",
-                "appid": self.api_key,
-                "units": self.units,
-            }
-            return self._fetch_weather_data(request_params)
-        else:
+        if not (coordinates := self._fetch_coordinates(location)):
             return ErrorArtifact(f"Error fetching coordinates for location: {location}")
+        lat, lon = coordinates
+        request_params = {
+            "lat": lat,
+            "lon": lon,
+            "exclude": "minutely,hourly,daily,alerts",
+            "appid": self.api_key,
+            "units": self.units,
+        }
+        return self._fetch_weather_data(request_params)
 
     @activity(
         config={
@@ -143,19 +140,17 @@ class OpenWeatherClient(BaseTool):
     )
     def get_hourly_forecast_by_location(self, params: dict) -> ListArtifact | TextArtifact | ErrorArtifact:
         location = params["values"].get("location")
-        coordinates = self._fetch_coordinates(location)
-        if coordinates:
-            lat, lon = coordinates
-            request_params = {
-                "lat": lat,
-                "lon": lon,
-                "exclude": "minutely,current,daily,alerts",
-                "appid": self.api_key,
-                "units": self.units,
-            }
-            return self._fetch_weather_data(request_params)
-        else:
+        if not (coordinates := self._fetch_coordinates(location)):
             return ErrorArtifact(f"Error fetching coordinates for location: {location}")
+        lat, lon = coordinates
+        request_params = {
+            "lat": lat,
+            "lon": lon,
+            "exclude": "minutely,current,daily,alerts",
+            "appid": self.api_key,
+            "units": self.units,
+        }
+        return self._fetch_weather_data(request_params)
 
     @activity(
         config={
@@ -166,30 +161,27 @@ class OpenWeatherClient(BaseTool):
     )
     def get_daily_forecast_by_location(self, params: dict) -> ListArtifact | TextArtifact | ErrorArtifact:
         location = params["values"].get("location")
-        coordinates = self._fetch_coordinates(location)
-        if coordinates:
-            lat, lon = coordinates
-            request_params = {
-                "lat": lat,
-                "lon": lon,
-                "exclude": "minutely,hourly,current,alerts",
-                "appid": self.api_key,
-                "units": self.units,
-            }
-            return self._fetch_weather_data(request_params)
-        else:
+        if not (coordinates := self._fetch_coordinates(location)):
             return ErrorArtifact(f"Error fetching coordinates for location: {location}")
+        lat, lon = coordinates
+        request_params = {
+            "lat": lat,
+            "lon": lon,
+            "exclude": "minutely,hourly,current,alerts",
+            "appid": self.api_key,
+            "units": self.units,
+        }
+        return self._fetch_weather_data(request_params)
 
     def _fetch_weather_data(self, request_params: dict) -> ListArtifact | TextArtifact | ErrorArtifact:
         try:
             response = requests.get(self.BASE_URL, params=request_params)
             if response.status_code == 200:
                 data = response.json()
-                if isinstance(data, list):
-                    wrapped_data = [InfoArtifact(item) for item in data]
-                    return ListArtifact(wrapped_data)
-                else:
+                if not isinstance(data, list):
                     return TextArtifact(str(data))
+                wrapped_data = [InfoArtifact(item) for item in data]
+                return ListArtifact(wrapped_data)
             else:
                 logging.error(f"Error fetching weather data. HTTP Status Code: {response.status_code}")
                 return ErrorArtifact("Error fetching weather data from OpenWeather API")

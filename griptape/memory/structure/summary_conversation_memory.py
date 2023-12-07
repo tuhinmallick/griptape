@@ -54,15 +54,15 @@ class SummaryConversationMemory(ConversationMemory):
     def unsummarized_runs(self, last_n: Optional[int] = None) -> list[Run]:
         summary_index_runs = self.runs[self.summary_index :]
 
-        if last_n:
-            last_n_runs = self.runs[-last_n:]
-
-            if len(summary_index_runs) > len(last_n_runs):
-                return last_n_runs
-            else:
-                return summary_index_runs
-        else:
+        if not last_n:
             return summary_index_runs
+        last_n_runs = self.runs[-last_n:]
+
+        return (
+            last_n_runs
+            if len(summary_index_runs) > len(last_n_runs)
+            else summary_index_runs
+        )
 
     def try_add_run(self, run: Run) -> None:
         super().try_add_run(run)
@@ -76,7 +76,7 @@ class SummaryConversationMemory(ConversationMemory):
 
     def summarize_runs(self, previous_summary: str, runs: list[Run]) -> str:
         try:
-            if len(runs) > 0:
+            if runs:
                 summary = self.summarize_conversation_template_generator.render(summary=previous_summary, runs=runs)
                 return self.prompt_driver.run(
                     prompt_stack=PromptStack(inputs=[PromptStack.Input(summary, role=PromptStack.USER_ROLE)])

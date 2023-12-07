@@ -62,13 +62,11 @@ class OpenAiCompletionPromptDriver(BasePromptDriver):
         result = self.client.completions.create(**self._base_params(prompt_stack), stream=True)
 
         for chunk in result:
-            if len(chunk.choices) == 1:
-                choice = chunk.choices[0]
-                delta_content = choice.text
-                yield TextArtifact(value=delta_content)
-
-            else:
+            if len(chunk.choices) != 1:
                 raise Exception("completion with more than one choice is not supported yet")
+            choice = chunk.choices[0]
+            delta_content = choice.text
+            yield TextArtifact(value=delta_content)
 
     def _base_params(self, prompt_stack: PromptStack) -> dict:
         prompt = self.prompt_stack_to_string(prompt_stack)

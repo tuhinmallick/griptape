@@ -97,4 +97,4 @@ class TestEventListener:
         pipeline.remove_event_listener(event_listener_3)
         pipeline.remove_event_listener(event_listener_4)
         pipeline.remove_event_listener(event_listener_5)
-        assert len(pipeline.event_listeners) == 0
+        assert not pipeline.event_listeners

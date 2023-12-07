@@ -142,14 +142,12 @@ def to_message(body: str, content_type: Optional[str]) -> message:
 
 def to_value_set(artifact_or_dict: ListArtifact | dict[str, ListArtifact]) -> set[str]:
     if isinstance(artifact_or_dict, ListArtifact):
-        return set([value.value for value in artifact_or_dict.value])
+        return {value.value for value in artifact_or_dict.value}
     elif isinstance(artifact_or_dict, dict):
-        return set(
-            [
-                text_artifact.value
-                for list_artifact in artifact_or_dict.values()
-                for text_artifact in list_artifact.value
-            ]
-        )
+        return {
+            text_artifact.value
+            for list_artifact in artifact_or_dict.values()
+            for text_artifact in list_artifact.value
+        }
     else:
         raise Exception

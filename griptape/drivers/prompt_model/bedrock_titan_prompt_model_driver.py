@@ -31,11 +31,9 @@ class BedrockTitanPromptModelDriver(BasePromptModelDriver):
         Returns:
             BedrockTitanTokenizer: The tokenizer for this driver.
         """
-        if self._tokenizer:
-            return self._tokenizer
-        else:
+        if not self._tokenizer:
             self._tokenizer = BedrockTitanTokenizer(model=self.prompt_driver.model)
-            return self._tokenizer
+        return self._tokenizer
 
     def prompt_stack_to_model_input(self, prompt_stack: PromptStack) -> dict:
         prompt_lines = []

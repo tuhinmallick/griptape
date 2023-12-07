@@ -47,11 +47,7 @@ class TextLoader(BaseLoader):
         else:
             body = text
 
-        if self.chunker:
-            chunks = self.chunker.chunk(body)
-        else:
-            chunks = [TextArtifact(body)]
-
+        chunks = self.chunker.chunk(body) if self.chunker else [TextArtifact(body)]
         if self.embedding_driver:
             for chunk in chunks:
                 chunk.generate_embedding(self.embedding_driver)

@@ -61,17 +61,16 @@ class PromptSummaryEngine(BaseSummaryEngine):
             return self.prompt_driver.run(
                 PromptStack(inputs=[PromptStack.Input(full_text, role=PromptStack.USER_ROLE)])
             )
-        else:
-            chunks = self.chunker.chunk(artifacts_text)
+        chunks = self.chunker.chunk(artifacts_text)
 
-            partial_text = self.template_generator.render(
-                summary=summary, text=chunks[0].value, rulesets=J2("rulesets/rulesets.j2").render(rulesets=rulesets)
-            )
+        partial_text = self.template_generator.render(
+            summary=summary, text=chunks[0].value, rulesets=J2("rulesets/rulesets.j2").render(rulesets=rulesets)
+        )
 
-            return self.summarize_artifacts_rec(
-                chunks[1:],
-                self.prompt_driver.run(
-                    PromptStack(inputs=[PromptStack.Input(partial_text, role=PromptStack.USER_ROLE)])
-                ).value,
-                rulesets=rulesets,
-            )
+        return self.summarize_artifacts_rec(
+            chunks[1:],
+            self.prompt_driver.run(
+                PromptStack(inputs=[PromptStack.Input(partial_text, role=PromptStack.USER_ROLE)])
+            ).value,
+            rulesets=rulesets,
+        )

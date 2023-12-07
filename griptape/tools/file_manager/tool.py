@@ -95,33 +95,31 @@ class FileManager(BaseTool):
         }
     )
     def save_memory_artifacts_to_disk(self, params: dict) -> ErrorArtifact | InfoArtifact:
-        memory = self.find_input_memory(params["values"]["memory_name"])
+        if not (memory := self.find_input_memory(params["values"]["memory_name"])):
+            return ErrorArtifact("memory not found")
         artifact_namespace = params["values"]["artifact_namespace"]
+        list_artifact = memory.load_artifacts(artifact_namespace)
+
         dir_name = params["values"]["dir_name"]
         file_name = params["values"]["file_name"]
 
-        if memory:
-            list_artifact = memory.load_artifacts(artifact_namespace)
+        if len(list_artifact) == 0:
+            return ErrorArtifact("no artifacts found")
+        elif len(list_artifact) == 1:
+            try:
+                self._save_to_disk(os.path.join(self.workdir, dir_name, file_name), list_artifact.value[0].value)
 
-            if len(list_artifact) == 0:
-                return ErrorArtifact("no artifacts found")
-            elif len(list_artifact) == 1:
-                try:
-                    self._save_to_disk(os.path.join(self.workdir, dir_name, file_name), list_artifact.value[0].value)
-
-                    return InfoArtifact(f"saved successfully")
-                except Exception as e:
-                    return ErrorArtifact(f"error writing file to disk: {e}")
-            else:
-                try:
-                    for a in list_artifact.value:
-                        self._save_to_disk(os.path.join(self.workdir, dir_name, f"{a.name}-{file_name}"), a.to_text())
-
-                    return InfoArtifact(f"saved successfully")
-                except Exception as e:
-                    return ErrorArtifact(f"error writing file to disk: {e}")
+                return InfoArtifact("saved successfully")
+            except Exception as e:
+                return ErrorArtifact(f"error writing file to disk: {e}")
         else:
-            return ErrorArtifact("memory not found")
+            try:
+                for a in list_artifact.value:
+                    self._save_to_disk(os.path.join(self.workdir, dir_name, f"{a.name}-{file_name}"), a.to_text())
+
+                return InfoArtifact("saved successfully")
+            except Exception as e:
+                return ErrorArtifact(f"error writing file to disk: {e}")
 
     @activity(
         config={
@@ -145,7 +143,7 @@ class FileManager(BaseTool):
         try:
             self._save_to_disk(full_path, content)
 
-            return InfoArtifact(f"saved successfully")
+            return InfoArtifact("saved successfully")
         except Exception as e:
             return ErrorArtifact(f"error writing file to disk: {e}")
 

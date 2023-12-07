@@ -33,20 +33,17 @@ class BaseGoogleClient(BaseTool, ABC):
                 query = f"name='{part}' and '{current_id}' in parents and mimeType='application/vnd.google-apps.folder'"
 
             response = service.files().list(q=query).execute()
-            files = response.get("files", [])
-
-            if not files:
-                if idx != len(parts) - 1:
-                    folder_metadata = {
-                        "name": part,
-                        "mimeType": "application/vnd.google-apps.folder",
-                        "parents": [current_id],
-                    }
-                    folder = service.files().create(body=folder_metadata, fields="id").execute()
-                    current_id = folder.get("id")
-                else:
-                    current_id = None
-            else:
+            if files := response.get("files", []):
                 current_id = files[0]["id"]
 
+            elif idx == len(parts) - 1:
+                current_id = None
+            else:
+                folder_metadata = {
+                    "name": part,
+                    "mimeType": "application/vnd.google-apps.folder",
+                    "parents": [current_id],
+                }
+                folder = service.files().create(body=folder_metadata, fields="id").execute()
+                current_id = folder.get("id")
         return current_id

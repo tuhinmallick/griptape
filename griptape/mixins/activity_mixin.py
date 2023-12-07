@@ -55,11 +55,14 @@ class ActivityMixin:
         return methods
 
     def find_activity(self, name: str) -> Optional[Callable]:
-        for method in self.activities():
-            if getattr(method, "is_activity", False) and method.name == name:
-                return method
-
-        return None
+        return next(
+            (
+                method
+                for method in self.activities()
+                if getattr(method, "is_activity", False) and method.name == name
+            ),
+            None,
+        )
 
     def activity_name(self, activity: Callable) -> str:
         if activity is None or not getattr(activity, "is_activity", False):

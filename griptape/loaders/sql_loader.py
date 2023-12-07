@@ -24,18 +24,9 @@ class SqlLoader(BaseLoader):
 
     def _load_query(self, query: str) -> list[CsvRowArtifact]:
         rows = self.sql_driver.execute_query(query)
-        artifacts = []
-
-        if rows:
-            chunks = [CsvRowArtifact(row.cells) for row in rows]
-        else:
-            chunks = []
-
+        chunks = [CsvRowArtifact(row.cells) for row in rows] if rows else []
         if self.embedding_driver:
             for chunk in chunks:
                 chunk.generate_embedding(self.embedding_driver)
 
-        for chunk in chunks:
-            artifacts.append(chunk)
-
-        return artifacts
+        return list(chunks)

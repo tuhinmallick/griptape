@@ -40,9 +40,7 @@ class SnowflakeSqlDriver(BaseSqlDriver):
             raise ValueError("Provide a Snowflake connection")
 
     def execute_query(self, query: str) -> Optional[list[BaseSqlDriver.RowResult]]:
-        rows = self.execute_query_raw(query)
-
-        if rows:
+        if rows := self.execute_query_raw(query):
             return [BaseSqlDriver.RowResult(row) for row in rows]
         else:
             return None
@@ -54,7 +52,7 @@ class SnowflakeSqlDriver(BaseSqlDriver):
             results = con.execute(sqlalchemy.text(query))
 
             if results.returns_rows:
-                return [{column: value for column, value in result.items()} for result in results]
+                return [dict(result.items()) for result in results]
             else:
                 return None
 

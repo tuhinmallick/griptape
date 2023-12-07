@@ -150,13 +150,12 @@ class RestApiClient(BaseTool):
     def get(self, params: dict) -> BaseArtifact:
         from requests import get, exceptions
 
-        values = params["values"]
         base_url = self.base_url
         path = self.path
 
         query_params = {}
         path_params = []
-        if values:
+        if values := params["values"]:
             query_params = values.get("query_params", {})
             path_params = values.get("path_params", [])
         url = self._build_url(base_url, path=path, path_params=path_params)
