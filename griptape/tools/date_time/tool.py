@@ -34,9 +34,7 @@ class DateTime(BaseTool):
 
         try:
             date_string = params["values"]["relative_date_string"]
-            relative_datetime = parse(date_string)
-
-            if relative_datetime:
+            if relative_datetime := parse(date_string):
                 return TextArtifact(str(relative_datetime))
             else:
                 return ErrorArtifact("invalid date string")

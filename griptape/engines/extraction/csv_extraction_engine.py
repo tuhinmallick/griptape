@@ -34,9 +34,10 @@ class CsvExtractionEngine(BaseExtractionEngine):
         rows = []
 
         with io.StringIO(text) as f:
-            for row in csv.reader(f):
-                rows.append(CsvRowArtifact(dict(zip(column_names, [x.strip() for x in row]))))
-
+            rows.extend(
+                CsvRowArtifact(dict(zip(column_names, [x.strip() for x in row])))
+                for row in csv.reader(f)
+            )
         return rows
 
     def _extract_rec(

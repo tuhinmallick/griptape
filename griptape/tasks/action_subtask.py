@@ -180,9 +180,9 @@ class ActionSubtask(PromptTask):
 
     def __validate_action_input(self, action_input: dict, mixin: ActivityMixin) -> None:
         try:
-            activity_schema = mixin.activity_schema(getattr(mixin, self.action_path))
-
-            if activity_schema:
+            if activity_schema := mixin.activity_schema(
+                getattr(mixin, self.action_path)
+            ):
                 validate(instance=action_input, schema=activity_schema)
         except ValidationError as e:
             self.structure.logger.error(f"Subtask {self.origin_task.id}\nInvalid activity input JSON: {e}")

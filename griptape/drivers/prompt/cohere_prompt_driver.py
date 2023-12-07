@@ -34,15 +34,13 @@ class CoherePromptDriver(BasePromptDriver):
     def try_run(self, prompt_stack: PromptStack) -> TextArtifact:
         result = self.client.generate(**self._base_params(prompt_stack))
 
-        if result.generations:
-            if len(result.generations) == 1:
-                generation = result.generations[0]
-
-                return TextArtifact(value=generation.text.strip())
-            else:
-                raise Exception("completion with more than one choice is not supported yet")
-        else:
+        if not result.generations:
             raise Exception("model response is empty")
+        if len(result.generations) != 1:
+            raise Exception("completion with more than one choice is not supported yet")
+        generation = result.generations[0]
+
+        return TextArtifact(value=generation.text.strip())
 
     def try_stream(self, prompt_stack: PromptStack) -> Iterator[TextArtifact]:
         result = self.client.generate(**self._base_params(prompt_stack), stream=True)

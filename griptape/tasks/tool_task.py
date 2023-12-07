@@ -55,10 +55,7 @@ class ToolTask(PromptTask, ActionSubtaskOriginMixin):
         return self.output
 
     def find_tool(self, tool_name: str) -> Optional[BaseTool]:
-        if self.tool.name == tool_name:
-            return self.tool
-        else:
-            return None
+        return self.tool if self.tool.name == tool_name else None
 
     def find_memory(self, memory_name: str) -> Optional[TaskMemory]:
         return None

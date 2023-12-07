@@ -17,10 +17,9 @@ class TaskMemoryClient(BaseTool):
         }
     )
     def summarize(self, params: dict) -> TextArtifact | ErrorArtifact:
-        memory = self.find_input_memory(params["values"]["memory_name"])
-        artifact_namespace = params["values"]["artifact_namespace"]
+        if memory := self.find_input_memory(params["values"]["memory_name"]):
+            artifact_namespace = params["values"]["artifact_namespace"]
 
-        if memory:
             return memory.summarize_namespace(artifact_namespace)
         else:
             return ErrorArtifact("memory not found")
@@ -42,11 +41,10 @@ class TaskMemoryClient(BaseTool):
         }
     )
     def query(self, params: dict) -> TextArtifact | ErrorArtifact:
-        memory = self.find_input_memory(params["values"]["memory_name"])
-        artifact_namespace = params["values"]["artifact_namespace"]
-        query = params["values"]["query"]
+        if memory := self.find_input_memory(params["values"]["memory_name"]):
+            artifact_namespace = params["values"]["artifact_namespace"]
+            query = params["values"]["query"]
 
-        if memory:
             return memory.query_namespace(namespace=artifact_namespace, query=query)
         else:
             return ErrorArtifact("memory not found")

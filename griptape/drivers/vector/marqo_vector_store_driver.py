@@ -127,20 +127,20 @@ class MarqoVectorStoreDriver(BaseVectorStoreDriver):
         # get documents corresponding to the ids
         documents = self.mq.index(self.index).get_documents(document_ids=ids, expose_facets=True)
 
-        # for each document, if it's found, create an Entry object
-        entries = []
-        for doc in documents["results"]:
-            if doc["_found"]:
-                entries.append(
-                    BaseVectorStoreDriver.Entry(
-                        id=doc["_id"],
-                        vector=doc["_tensor_facets"][0]["_embedding"],
-                        meta={k: v for k, v in doc.items() if k not in ["_id", "_tensor_facets", "_found"]},
-                        namespace=doc.get("namespace"),
-                    )
-                )
-
-        return entries
+        return [
+            BaseVectorStoreDriver.Entry(
+                id=doc["_id"],
+                vector=doc["_tensor_facets"][0]["_embedding"],
+                meta={
+                    k: v
+                    for k, v in doc.items()
+                    if k not in ["_id", "_tensor_facets", "_found"]
+                },
+                namespace=doc.get("namespace"),
+            )
+            for doc in documents["results"]
+            if doc["_found"]
+        ]
 
     def query(
         self,

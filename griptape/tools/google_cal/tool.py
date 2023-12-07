@@ -37,7 +37,7 @@ class GoogleCalendarClient(BaseGoogleClient):
                 version="v3",
                 owner_email=self.owner_email,
             )
-            now = datetime.datetime.utcnow().isoformat() + "Z"
+            now = f"{datetime.datetime.utcnow().isoformat()}Z"
 
             events_result = (
                 service.events()

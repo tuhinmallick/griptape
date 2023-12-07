@@ -123,7 +123,7 @@ class MongoDbAtlasVectorStoreDriver(BaseVectorStoreDriver):
         if index:
             pipeline[0]["$search"]["index"] = index
 
-        results = [
+        return [
             BaseVectorStoreDriver.QueryResult(
                 id=str(doc["_id"]),
                 vector=doc["vector"] if include_vectors else None,
@@ -133,5 +133,3 @@ class MongoDbAtlasVectorStoreDriver(BaseVectorStoreDriver):
             )
             for doc in list(collection.aggregate(pipeline))
         ]
-
-        return results

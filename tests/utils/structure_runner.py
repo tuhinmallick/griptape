@@ -108,7 +108,6 @@ def prompt_driver_id_fn(prompt_driver) -> str:
 def run_structure(structure, prompt) -> dict:
     result = structure.run(prompt)
     output_text = result.output_task.output.to_text()
-    json_matches = re.findall(r"[^{]*({.*})", output_text, re.DOTALL)
-    if json_matches:
+    if json_matches := re.findall(r"[^{]*({.*})", output_text, re.DOTALL):
         return loads(json_matches[0], strict=False)
     return {"answer": output_text, "result": "unknown"}

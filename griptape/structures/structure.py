@@ -92,15 +92,14 @@ class Structure(ABC):
     def logger(self) -> Logger:
         if self.custom_logger:
             return self.custom_logger
-        else:
-            if self._logger is None:
-                self._logger = logging.getLogger(self.LOGGER_NAME)
+        if self._logger is None:
+            self._logger = logging.getLogger(self.LOGGER_NAME)
 
-                self._logger.propagate = False
-                self._logger.level = self.logger_level
+            self._logger.propagate = False
+            self._logger.level = self.logger_level
 
-                self._logger.handlers = [RichHandler(show_time=True, show_path=False)]
-            return self._logger
+            self._logger.handlers = [RichHandler(show_time=True, show_path=False)]
+        return self._logger
 
     @property
     def input_task(self) -> Optional[BaseTask]:
@@ -156,14 +155,14 @@ class Structure(ABC):
         if event_listener in self.event_listeners:
             self.event_listeners.remove(event_listener)
         else:
-            raise ValueError(f"Event Listener not found.")
+            raise ValueError("Event Listener not found.")
 
     def publish_event(self, event: BaseEvent) -> None:
         for event_listener in self.event_listeners:
-            handler = event_listener.handler
             event_types = event_listener.event_types
 
             if event_types is None or type(event) in event_types:
+                handler = event_listener.handler
                 handler(event)
 
     def context(self, task: BaseTask) -> dict[str, Any]:

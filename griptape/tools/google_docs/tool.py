@@ -45,8 +45,9 @@ class GoogleDocsClient(BaseGoogleClient):
                 scopes=self.DRIVE_FILE_SCOPES, service_name="drive", version="v3", owner_email=self.owner_email
             )
 
-            document_id = self._convert_path_to_file_id(drive_service, file_path)
-            if document_id:
+            if document_id := self._convert_path_to_file_id(
+                drive_service, file_path
+            ):
                 doc = docs_service.documents().get(documentId=document_id).execute()
                 content = doc["body"]["content"]
                 last_text = content[-1]["paragraph"]["elements"][-1]["textRun"]["content"]
@@ -93,8 +94,9 @@ class GoogleDocsClient(BaseGoogleClient):
                 scopes=self.DRIVE_FILE_SCOPES, service_name="drive", version="v3", owner_email=self.owner_email
             )
 
-            document_id = self._convert_path_to_file_id(drive_service, file_path)
-            if document_id:
+            if document_id := self._convert_path_to_file_id(
+                drive_service, file_path
+            ):
                 doc = docs_service.documents().get(documentId=document_id).execute()
 
                 if len(doc["body"]["content"]) == 1:
@@ -151,19 +153,19 @@ class GoogleDocsClient(BaseGoogleClient):
             doc_id = doc["documentId"]
 
             if folder_path.lower() != self.DEFAULT_FOLDER_PATH:
-                folder_id = self._convert_path_to_file_id(drive_service, folder_path)
-                if folder_id:
+                if folder_id := self._convert_path_to_file_id(
+                    drive_service, folder_path
+                ):
                     drive_service.files().update(fileId=doc_id, addParents=folder_id, fields="id, parents").execute()
                 else:
                     return ErrorArtifact(f"Error: Folder not found for path {folder_path}")
 
-            if content:
-                save_content_params = {"document_id": doc_id, "content": content}
-                saved_document_id = self._save_to_doc(save_content_params)
-                return InfoArtifact(f"Content has been successfully saved to Google Doc with ID: {saved_document_id}.")
-            else:
+            if not content:
                 return InfoArtifact(f"Google Doc '{file_path}' created with ID: {doc_id}")
 
+            save_content_params = {"document_id": doc_id, "content": content}
+            saved_document_id = self._save_to_doc(save_content_params)
+            return InfoArtifact(f"Content has been successfully saved to Google Doc with ID: {saved_document_id}.")
         except Exception as e:
             logging.error(e)
             return ErrorArtifact(f"Error creating/saving Google Doc: {e}")
@@ -188,31 +190,26 @@ class GoogleDocsClient(BaseGoogleClient):
     )
     def save_memory_artifacts_to_google_docs(self, params: dict) -> ErrorArtifact | InfoArtifact:
         values = params["values"]
-        memory = self.find_input_memory(values["memory_name"])
-
-        if memory:
-            artifacts = memory.load_artifacts(values["artifact_namespace"])
-
-            if artifacts:
-                try:
-                    file_path = values["file_name"]
-                    content = "\n".join([a.value for a in artifacts])
-
-                    save_params = {
-                        "file_path": file_path,
-                        "content": content,
-                        "folder_path": values.get("folder_path", self.DEFAULT_FOLDER_PATH),
-                    }
-
-                    return self.save_content_to_google_doc(save_params)
-
-                except Exception as e:
-                    return ErrorArtifact(f"Error: {e}")
-
-            else:
-                return ErrorArtifact("no artifacts found")
-        else:
+        if not (memory := self.find_input_memory(values["memory_name"])):
             return ErrorArtifact("memory not found")
+        if artifacts := memory.load_artifacts(values["artifact_namespace"]):
+            try:
+                content = "\n".join([a.value for a in artifacts])
+
+                file_path = values["file_name"]
+                save_params = {
+                    "file_path": file_path,
+                    "content": content,
+                    "folder_path": values.get("folder_path", self.DEFAULT_FOLDER_PATH),
+                }
+
+                return self.save_content_to_google_doc(save_params)
+
+            except Exception as e:
+                return ErrorArtifact(f"Error: {e}")
+
+        else:
+            return ErrorArtifact("no artifacts found")
 
     def _save_to_doc(self, params: dict) -> str:
         service = self._build_client(

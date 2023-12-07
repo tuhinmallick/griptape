@@ -55,12 +55,10 @@ class GoogleDriveClient(BaseGoogleClient):
 
             if folder_path == self.DEFAULT_FOLDER_PATH:
                 query = "mimeType != 'application/vnd.google-apps.folder' and 'root' in parents and trashed=false"
+            elif folder_id := self._convert_path_to_file_id(service, folder_path):
+                query = f"'{folder_id}' in parents and trashed=false"
             else:
-                folder_id = self._convert_path_to_file_id(service, folder_path)
-                if folder_id:
-                    query = f"'{folder_id}' in parents and trashed=false"
-                else:
-                    return ErrorArtifact(f"Could not find folder: {folder_path}")
+                return ErrorArtifact(f"Could not find folder: {folder_path}")
 
             items = self._list_files(service, query)
             return ListArtifact([TextArtifact(i) for i in items])
@@ -94,37 +92,32 @@ class GoogleDriveClient(BaseGoogleClient):
         file_name = values["file_name"]
         folder_path = values.get("folder_path", self.DEFAULT_FOLDER_PATH)
 
-        if memory:
-            artifacts = memory.load_artifacts(values["artifact_namespace"])
-
-            if artifacts:
-                service = self._build_client(
-                    self.DRIVE_FILE_SCOPES, self.SERVICE_NAME, self.SERVICE_VERSION, self.owner_email
-                )
-
-                if folder_path == self.DEFAULT_FOLDER_PATH:
-                    folder_id = self.DEFAULT_FOLDER_PATH
-                else:
-                    folder_id = self._convert_path_to_file_id(service, folder_path)
-
-                if folder_id:
-                    try:
-                        if len(artifacts) == 1:
-                            self._save_to_drive(file_name, artifacts[0].value, folder_id)
-                        else:
-                            for a in artifacts:
-                                self._save_to_drive(f"{a.name}-{file_name}", a.value, folder_id)
-
-                        return InfoArtifact(f"saved successfully")
-
-                    except Exception as e:
-                        return ErrorArtifact(f"error saving file to Google Drive: {e}")
-                else:
-                    return ErrorArtifact(f"Could not find folder: {folder_path}")
-            else:
-                return ErrorArtifact("no artifacts found")
-        else:
+        if not memory:
             return ErrorArtifact("memory not found")
+        if not (artifacts := memory.load_artifacts(values["artifact_namespace"])):
+            return ErrorArtifact("no artifacts found")
+        service = self._build_client(
+            self.DRIVE_FILE_SCOPES, self.SERVICE_NAME, self.SERVICE_VERSION, self.owner_email
+        )
+
+        folder_id = (
+            self.DEFAULT_FOLDER_PATH
+            if folder_path == self.DEFAULT_FOLDER_PATH
+            else self._convert_path_to_file_id(service, folder_path)
+        )
+        if not folder_id:
+            return ErrorArtifact(f"Could not find folder: {folder_path}")
+        try:
+            if len(artifacts) == 1:
+                self._save_to_drive(file_name, artifacts[0].value, folder_id)
+            else:
+                for a in artifacts:
+                    self._save_to_drive(f"{a.name}-{file_name}", a.value, folder_id)
+
+            return InfoArtifact("saved successfully")
+
+        except Exception as e:
+            return ErrorArtifact(f"error saving file to Google Drive: {e}")
 
     @activity(
         config={
@@ -148,7 +141,7 @@ class GoogleDriveClient(BaseGoogleClient):
         try:
             self._save_to_drive(filename, content)
 
-            return InfoArtifact(f"saved successfully")
+            return InfoArtifact("saved successfully")
         except Exception as e:
             return ErrorArtifact(f"error saving file to Google Drive: {e}")
 
@@ -179,8 +172,7 @@ class GoogleDriveClient(BaseGoogleClient):
             )
 
             for path in values["paths"]:
-                file_id = self._convert_path_to_file_id(service, path)
-                if file_id:
+                if file_id := self._convert_path_to_file_id(service, path):
                     file_info = service.files().get(fileId=file_id).execute()
                     mime_type = file_info["mimeType"]
 
@@ -247,23 +239,22 @@ class GoogleDriveClient(BaseGoogleClient):
             else:
                 folder_id = self._convert_path_to_file_id(service, folder_path)
 
-            if folder_id:
-                query = None
-                if search_mode == "name":
-                    query = f"name='{values['search_query']}'"
-                elif search_mode == "content":
-                    query = f"fullText contains '{values['search_query']}'"
-
-                query += " and trashed=false"
-                if folder_id != self.DEFAULT_FOLDER_PATH:
-                    query += f" and '{folder_id}' in parents"
-
-                results = service.files().list(q=query).execute()
-                items = results.get("files", [])
-                return ListArtifact([TextArtifact(i) for i in items])
-            else:
+            if not folder_id:
                 return ErrorArtifact(f"Folder path {folder_path} not found")
 
+            query = None
+            if search_mode == "content":
+                query = f"fullText contains '{values['search_query']}'"
+
+            elif search_mode == "name":
+                query = f"name='{values['search_query']}'"
+            query += " and trashed=false"
+            if folder_id != self.DEFAULT_FOLDER_PATH:
+                query += f" and '{folder_id}' in parents"
+
+            results = service.files().list(q=query).execute()
+            items = results.get("files", [])
+            return ListArtifact([TextArtifact(i) for i in items])
         except HttpError as e:
             return ErrorArtifact(f"error searching for file in Google Drive: {e}")
         except MalformedError:

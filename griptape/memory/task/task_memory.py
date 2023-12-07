@@ -31,10 +31,7 @@ class TaskMemory(ActivityMixin):
         find_storage = lambda a: next((v for k, v in self.artifact_storages.items() if isinstance(a, k)), None)
 
         if isinstance(artifact, ListArtifact):
-            if artifact.has_items():
-                return find_storage(artifact.value[0])
-            else:
-                return None
+            return find_storage(artifact.value[0]) if artifact.has_items() else None
         else:
             return find_storage(artifact)
 
@@ -43,31 +40,28 @@ class TaskMemory(ActivityMixin):
     ) -> BaseArtifact:
         from griptape.utils import J2
 
-        tool_name = tool_activity.__self__.name
-        activity_name = tool_activity.name
-        namespace = output_artifact.name
-
         if output_artifact:
-            result = self.store_artifact(namespace, output_artifact)
+            tool_name = tool_activity.__self__.name
+            activity_name = tool_activity.name
+            namespace = output_artifact.name
 
-            if result:
+            if result := self.store_artifact(namespace, output_artifact):
                 return result
-            else:
-                self.namespace_metadata[namespace] = subtask.action_to_json()
+            self.namespace_metadata[namespace] = subtask.action_to_json()
 
-                output = J2("memory/tool.j2").render(
-                    memory_name=self.name,
-                    tool_name=tool_name,
-                    activity_name=activity_name,
-                    artifact_namespace=namespace,
+            output = J2("memory/tool.j2").render(
+                memory_name=self.name,
+                tool_name=tool_name,
+                activity_name=activity_name,
+                artifact_namespace=namespace,
+            )
+
+            if subtask.structure and subtask.structure.meta_memory:
+                subtask.structure.meta_memory.add_entry(
+                    ActionSubtaskMetaEntry(thought=subtask.thought, action=subtask.action_to_json(), answer=output)
                 )
 
-                if subtask.structure and subtask.structure.meta_memory:
-                    subtask.structure.meta_memory.add_entry(
-                        ActionSubtaskMetaEntry(thought=subtask.thought, action=subtask.action_to_json(), answer=output)
-                    )
-
-                return InfoArtifact(output)
+            return InfoArtifact(output)
         else:
             return InfoArtifact("tool output is empty")
 
@@ -80,51 +74,39 @@ class TaskMemory(ActivityMixin):
         elif namespace_storage and namespace_storage != storage:
             return ErrorArtifact("error storing tool output in memory")
         else:
-            if storage:
-                if isinstance(artifact, ListArtifact):
-                    for a in artifact.value:
-                        storage.store_artifact(namespace, a)
+            if isinstance(artifact, ListArtifact):
+                for a in artifact.value:
+                    storage.store_artifact(namespace, a)
 
-                    self.namespace_storage[namespace] = storage
+                self.namespace_storage[namespace] = storage
 
-                    return None
-                elif isinstance(artifact, BaseArtifact):
-                    storage.store_artifact(namespace, artifact)
+                return None
+            elif isinstance(artifact, BaseArtifact):
+                storage.store_artifact(namespace, artifact)
 
-                    self.namespace_storage[namespace] = storage
+                self.namespace_storage[namespace] = storage
 
-                    return None
-                else:
-                    return ErrorArtifact("error storing tool output in memory")
+                return None
             else:
                 return ErrorArtifact("error storing tool output in memory")
 
     def load_artifacts(self, namespace: str) -> ListArtifact:
-        storage = self.namespace_storage.get(namespace)
-
-        if storage:
+        if storage := self.namespace_storage.get(namespace):
             return storage.load_artifacts(namespace)
         else:
             return ListArtifact()
 
     def find_input_memory(self, memory_name: str) -> Optional[TaskMemory]:
-        if memory_name == self.name:
-            return self
-        else:
-            return None
+        return self if memory_name == self.name else None
 
     def summarize_namespace(self, namespace: str) -> TextArtifact | InfoArtifact:
-        storage = self.namespace_storage.get(namespace)
-
-        if storage:
+        if storage := self.namespace_storage.get(namespace):
             return storage.summarize(namespace)
         else:
             return InfoArtifact("Can't find memory content")
 
     def query_namespace(self, namespace: str, query: str) -> TextArtifact | InfoArtifact:
-        storage = self.namespace_storage.get(namespace)
-
-        if storage:
+        if storage := self.namespace_storage.get(namespace):
             return storage.query(namespace=namespace, query=query, metadata=self.namespace_metadata.get(namespace))
         else:
             return InfoArtifact("Can't find memory content")

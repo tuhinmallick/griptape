@@ -210,10 +210,10 @@ class TestPipeline:
         assert first_task.structure == pipeline
         assert second_task.structure == pipeline
         assert third_task.structure == pipeline
-        assert [parent.id for parent in first_task.parents] == []
+        assert not [parent.id for parent in first_task.parents]
         assert [child.id for child in first_task.children] == ["test3"]
         assert [parent.id for parent in second_task.parents] == ["test3"]
-        assert [child.id for child in second_task.children] == []
+        assert not [child.id for child in second_task.children]
         assert [parent.id for parent in third_task.parents] == ["test1"]
         assert [child.id for child in third_task.children] == ["test2"]
 
@@ -234,12 +234,12 @@ class TestPipeline:
         assert first_task.structure == pipeline
         assert second_task.structure == pipeline
         assert third_task.structure == pipeline
-        assert [parent.id for parent in first_task.parents] == []
+        assert not [parent.id for parent in first_task.parents]
         assert [child.id for child in first_task.children] == ["test2"]
         assert [parent.id for parent in second_task.parents] == ["test1"]
         assert [child.id for child in second_task.children] == ["test3"]
         assert [parent.id for parent in third_task.parents] == ["test2"]
-        assert [child.id for child in third_task.children] == []
+        assert not [child.id for child in third_task.children]
 
     def test_prompt_stack_without_memory(self):
         pipeline = Pipeline(conversation_memory=None, prompt_driver=MockPromptDriver())

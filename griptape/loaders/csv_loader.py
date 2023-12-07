@@ -34,7 +34,5 @@ class CsvLoader(BaseLoader):
                 for chunk in chunks:
                     chunk.generate_embedding(self.embedding_driver)
 
-            for chunk in chunks:
-                artifacts.append(chunk)
-
+            artifacts.extend(iter(chunks))
         return artifacts

@@ -47,17 +47,16 @@ class HuggingFacePipelinePromptDriver(BasePromptDriver):
             max_new_tokens=self.tokenizer.count_tokens_left(prompt),
         )
 
-        if generator.task in self.SUPPORTED_TASKS:
-            extra_params = {"pad_token_id": self.tokenizer.tokenizer.eos_token_id}
-
-            response = generator(prompt, **(self.DEFAULT_PARAMS | extra_params | self.params))
-
-            if len(response) == 1:
-                return TextArtifact(value=response[0]["generated_text"].strip())
-            else:
-                raise Exception("completion with more than one choice is not supported yet")
-        else:
+        if generator.task not in self.SUPPORTED_TASKS:
             raise Exception(f"only models with the following tasks are supported: {self.SUPPORTED_TASKS}")
+        extra_params = {"pad_token_id": self.tokenizer.tokenizer.eos_token_id}
+
+        response = generator(prompt, **(self.DEFAULT_PARAMS | extra_params | self.params))
+
+        if len(response) == 1:
+            return TextArtifact(value=response[0]["generated_text"].strip())
+        else:
+            raise Exception("completion with more than one choice is not supported yet")
 
     def try_stream(self, _: PromptStack) -> Iterator[TextArtifact]:
         raise NotImplementedError("streaming is not supported")

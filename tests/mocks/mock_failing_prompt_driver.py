@@ -15,17 +15,16 @@ class MockFailingPromptDriver(BasePromptDriver):
     tokenizer: BaseTokenizer = OpenAiTokenizer(model=OpenAiTokenizer.DEFAULT_OPENAI_GPT_3_CHAT_MODEL)
 
     def try_run(self, prompt_stack: PromptStack) -> TextArtifact:
-        if self.current_attempt < self.max_failures:
-            self.current_attempt += 1
-
-            raise Exception(f"failed attempt")
-        else:
+        if self.current_attempt >= self.max_failures:
             return TextArtifact("success")
+        self.current_attempt += 1
+
+        raise Exception("failed attempt")
 
     def try_stream(self, prompt_stack: PromptStack) -> Iterator[TextArtifact]:
         if self.current_attempt < self.max_failures:
             self.current_attempt += 1
 
-            raise Exception(f"failed attempt")
+            raise Exception("failed attempt")
         else:
             yield TextArtifact("success")

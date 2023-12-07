@@ -118,23 +118,22 @@ class ToolkitTask(PromptTask, ActionSubtaskOriginMixin):
         subtask = self.add_subtask(ActionSubtask(self.active_driver().run(prompt_stack=self.prompt_stack).to_text()))
 
         while True:
-            if subtask.output is None:
-                if len(self.subtasks) >= self.max_subtasks:
-                    subtask.output = ErrorArtifact(f"Exceeded tool limit of {self.max_subtasks} subtasks per task")
-                elif subtask.action_name is None:
-                    # handle case when the LLM failed to follow the ReAct prompt and didn't return a proper action
-                    subtask.output = TextArtifact(subtask.input_template)
-                else:
-                    subtask.before_run()
-                    subtask.run()
-                    subtask.after_run()
-
-                    subtask = self.add_subtask(
-                        ActionSubtask(self.active_driver().run(prompt_stack=self.prompt_stack).to_text())
-                    )
-            else:
+            if subtask.output is not None:
                 break
 
+            if len(self.subtasks) >= self.max_subtasks:
+                subtask.output = ErrorArtifact(f"Exceeded tool limit of {self.max_subtasks} subtasks per task")
+            elif subtask.action_name is None:
+                # handle case when the LLM failed to follow the ReAct prompt and didn't return a proper action
+                subtask.output = TextArtifact(subtask.input_template)
+            else:
+                subtask.before_run()
+                subtask.run()
+                subtask.after_run()
+
+                subtask = self.add_subtask(
+                    ActionSubtask(self.active_driver().run(prompt_stack=self.prompt_stack).to_text())
+                )
         self.output = subtask.output
 
         return self.output

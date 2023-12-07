@@ -104,9 +104,7 @@ class BaseTool(ActivityMixin, ABC):
     def execute(self, activity: Callable, subtask: ActionSubtask) -> BaseArtifact:
         preprocessed_input = self.before_run(activity, subtask.action_input)
         output = self.run(activity, subtask, preprocessed_input)
-        postprocessed_output = self.after_run(activity, subtask, output)
-
-        return postprocessed_output
+        return self.after_run(activity, subtask, output)
 
     def before_run(self, activity: Callable, value: Optional[dict]) -> Optional[dict]:
         return value
@@ -115,13 +113,10 @@ class BaseTool(ActivityMixin, ABC):
         activity_result = activity(value)
 
         if isinstance(activity_result, BaseArtifact):
-            result = activity_result
-        else:
-            logging.warning("Activity result is not an artifact; converting result to InfoArtifact")
+            return activity_result
+        logging.warning("Activity result is not an artifact; converting result to InfoArtifact")
 
-            result = InfoArtifact(activity_result)
-
-        return result
+        return InfoArtifact(activity_result)
 
     def after_run(self, activity: Callable, subtask: ActionSubtask, value: BaseArtifact) -> BaseArtifact:
         if value:
@@ -129,10 +124,7 @@ class BaseTool(ActivityMixin, ABC):
                 for memory in activity.__self__.output_memory.get(activity.name, []):
                     value = memory.process_output(activity, subtask, value)
 
-                if isinstance(value, BaseArtifact):
-                    return value
-                else:
-                    return TextArtifact(str(value))
+                return value if isinstance(value, BaseArtifact) else TextArtifact(str(value))
             else:
                 return value
         else:

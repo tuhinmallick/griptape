@@ -21,9 +21,7 @@ class SqlDriver(BaseSqlDriver):
         self.engine = sqlalchemy.create_engine(self.engine_url, **self.create_engine_params)
 
     def execute_query(self, query: str) -> Optional[list[BaseSqlDriver.RowResult]]:
-        rows = self.execute_query_raw(query)
-
-        if rows:
+        if rows := self.execute_query_raw(query):
             return [BaseSqlDriver.RowResult(row) for row in rows]
         else:
             return None
@@ -35,7 +33,7 @@ class SqlDriver(BaseSqlDriver):
             results = con.execute(sqlalchemy.text(query))
 
             if results.returns_rows:
-                return [{column: value for column, value in result.items()} for result in results]
+                return [dict(result.items()) for result in results]
             else:
                 return None
 

@@ -10,18 +10,15 @@ class ListArtifact(BaseArtifact):
 
     @value.validator
     def validate_value(self, _, value: list[BaseArtifact]) -> None:
-        if len(value) > 0:
+        if value:
             first_type = type(value[0])
 
             if not all(isinstance(v, first_type) for v in value):
-                raise ValueError(f"list elements in 'value' are not the same type")
+                raise ValueError("list elements in 'value' are not the same type")
 
     @property
     def child_type(self) -> Optional[type]:
-        if self.value:
-            return type(self.value[0])
-        else:
-            return None
+        return type(self.value[0]) if self.value else None
 
     def __bool__(self) -> bool:
         return len(self) > 0
@@ -38,10 +35,7 @@ class ListArtifact(BaseArtifact):
         return ListArtifact(self.value + other.value)
 
     def is_type(self, target_type: type) -> bool:
-        if self.value:
-            return isinstance(self.value[0], target_type)
-        else:
-            return False
+        return isinstance(self.value[0], target_type) if self.value else False
 
     def has_items(self) -> bool:
         return len(self) > 0

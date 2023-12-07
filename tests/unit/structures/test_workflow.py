@@ -394,8 +394,8 @@ class TestWorkflow:
         ordered_tasks = workflow.order_tasks()
 
         assert ordered_tasks[0] == task1
-        assert ordered_tasks[1] == task2 or ordered_tasks[1] == task3
-        assert ordered_tasks[2] == task2 or ordered_tasks[2] == task3
+        assert ordered_tasks[1] in [task2, task3]
+        assert ordered_tasks[2] in [task2, task3]
         assert ordered_tasks[3] == task4
 
     def test_context(self):

@@ -31,11 +31,9 @@ class BedrockJurassicPromptModelDriver(BasePromptModelDriver):
         Returns:
             BedrockJurassicTokenizer: The tokenizer for this driver.
         """
-        if self._tokenizer:
-            return self._tokenizer
-        else:
+        if not self._tokenizer:
             self._tokenizer = BedrockJurassicTokenizer(model=self.prompt_driver.model)
-            return self._tokenizer
+        return self._tokenizer
 
     def prompt_stack_to_model_input(self, prompt_stack: PromptStack) -> dict:
         prompt_lines = []

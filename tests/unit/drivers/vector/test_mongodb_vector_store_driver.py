@@ -63,4 +63,4 @@ class TestMongoDbAtlasVectorStoreDriver:
         vector = [0.5, 0.5, 0.5]
         driver.upsert_vector(vector, vector_id=vector_id_str)  # ensure at least one entry exists
         results = list(driver.load_entries())
-        assert results is not None and len(results) > 0
+        assert results is not None and results
